@@ -1,47 +1,57 @@
-import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import styles from './Modal.module.css';
+import React, { useState } from 'react';
+import styles from './styles.module.css';
+import Modal from './Modal';
+import Button from './Button';
 
-const Modal = ({ isOpen, handleClose, selectedImage }) => {
-  useEffect(() => {
-    const handleKeyDown = event => {
-      if (event.key === 'Escape') {
-        handleClose();
-      }
-    };
+const ImageGallery = ({ articles, visibleImages, loadMore }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
 
-    document.addEventListener('keydown', handleKeyDown);
+  const openModal = imageUrl => {
+    setSelectedImage(imageUrl);
+    setModalOpen(true);
+  };
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleClose]);
+  const closeModal = () => {
+    setModalOpen(false);
+  };
 
-  const handleClickOutside = event => {
-    if (event.target === event.currentTarget) {
-      handleClose();
-    }
+  const handleLoadMore = () => {
+    loadMore();
   };
 
   return (
-    <div
-      className={`${styles.overlay} ${isOpen ? styles.overlayOpen : ''}`}
-      onClick={handleClickOutside}
-    >
-      <div className={styles.modal}>
-        <img src={selectedImage} alt="" />
-        <button className={styles.closeButton} onClick={handleClose}>
-          &times;
-        </button>
-      </div>
+    <div className={styles.ImageGallery}>
+      {articles
+        .slice(0, visibleImages)
+        .map(({ id, webformatURL, largeImageURL }, index) => {
+          const uniqueKey = `${id}_${index}`;
+          return (
+            <div
+              key={uniqueKey}
+              onClick={() => openModal(largeImageURL)}
+              className={styles.ImageGalleryItem}
+            >
+              <img
+                className={styles.ImageGalleryItemImg}
+                src={webformatURL}
+                alt={`${id}`}
+              />
+            </div>
+          );
+        })}
+      <Modal
+        isOpen={modalOpen}
+        handleClose={closeModal}
+        selectedImage={selectedImage}
+      >
+        {selectedImage && <img src={selectedImage} alt="Large version" />}
+      </Modal>
+      {articles.length > visibleImages && (
+        <Button onClick={handleLoadMore} label="Load More" isHidden={false} />
+      )}
     </div>
   );
 };
 
-Modal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
-  selectedImage: PropTypes.string.isRequired,
-};
-
-export default Modal;
+export default ImageGallery;
