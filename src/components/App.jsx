@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import ImageGallery from './ImageGallery';
 import ImageService from './ImageService';
 import ErrorAlert from './ErrorAlert';
@@ -14,6 +14,18 @@ const App = () => {
   const [visibleImages, setVisibleImages] = useState(12);
   const [perPage] = useState(20);
   const [totalHits, setTotalHits] = useState(0);
+
+  const triggerSearch = useCallback(
+    debounce(async () => {
+      setArticles([]);
+      setError('');
+      setIsLoading(true);
+      setTotalHits(0);
+      await retrieveArticles();
+      setIsLoading(false);
+    }, 500),
+    [searchTerm]
+  );
 
   const retrieveArticles = async (page = 1) => {
     let uniqueArticles = [];
@@ -49,19 +61,6 @@ const App = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const triggerSearch = debounce(async () => {
-      setArticles([]);
-      setError('');
-      setIsLoading(true);
-      setTotalHits(0);
-      await retrieveArticles();
-      setIsLoading(false);
-    }, 500);
-
-    triggerSearch();
-  }, [searchTerm]);
 
   const loadMore = async () => {
     const nextPage = Math.ceil((visibleImages + perPage) / perPage);
